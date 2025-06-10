@@ -50,7 +50,7 @@ int luz = 0;
 int alarmasConsecutivas = 0;
 
 // UIDs de las tarjetas RFID
-byte tarjetaAltoUID[4] = {0xE6, 0xC5, 0xD4, 0x38};   // Card UID: E6 C5 D4 38 (Confort Alto)
+byte tarjetaAltoUID[4] = {0x62, 0xEC, 0xA9, 0x00};   // Card UID: E6 C5 D4 38 (Confort Alto)62 EC A9 00
 byte tarjetaBajoUID[4] = {0x43, 0x68, 0xAB, 0xA1};   // Card UID: 43 68 AB A1 (Confort Bajo)
 
 // ----------------- ENUMERACIONES -----------------
@@ -131,50 +131,6 @@ bool leerTarjetaRFID() {
   mfrc522.PCD_StopCrypto1();
   return false;
 }
-
-bool leerPMVdeTarjeta(float &valorPMV) {
-  if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial()) {
-    return false; // No hay tarjeta presente
-  }
-
-  byte blockAddr = 4;
-  MFRC522::MIFARE_Key key;
-  for (byte i = 0; i < 6; i++) key.keyByte[i] = 0xFF; // clave por defecto
-
-  MFRC522::StatusCode status;
-  byte buffer[18];
-  byte size = sizeof(buffer);
-
-  // Autenticación
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockAddr, &key, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print(F("Fallo en autenticación: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    mfrc522.PICC_HaltA();
-    mfrc522.PCD_StopCrypto1();
-    return false;
-  }
-
-  // Leer bloque
-  status = mfrc522.MIFARE_Read(blockAddr, buffer, &size);
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print(F("Fallo en lectura del bloque: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    mfrc522.PICC_HaltA();
-    mfrc522.PCD_StopCrypto1();
-    return false;
-  }
-
-  // Convertir los primeros 4 bytes a float (formato Little Endian estándar)
-  memcpy(&valorPMV, buffer, sizeof(float));
-
-  // Detener la comunicación
-  mfrc522.PICC_HaltA();
-  mfrc522.PCD_StopCrypto1();
-
-  return true;
-}
-
 // ----------------- TAREAS ASÍNCRONAS -----------------
 AsyncTask Task_LED_Correcto(1000, false, []() {
   digitalWrite(LED_VERDE, HIGH);
